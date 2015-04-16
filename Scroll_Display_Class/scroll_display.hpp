@@ -4,8 +4,6 @@
 #include <string>
 #include <assert.h>
 
-#include "common/global/global_defines.hpp"
-
 namespace scrollDisplay
 {
     typedef class scroll_display_class scroll_display_class;

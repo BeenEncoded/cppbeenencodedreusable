@@ -2,9 +2,16 @@
 #include <sstream>
 #include <vector>
 #include <assert.h>
+#include <stdexcept>
+#include <exception>
 
 #include "scroll_display.hpp"
-#include "common/global/global_defines.hpp"
+
+#ifndef ethrow
+#define ethrow(MSG) throw std::runtime_error(std::string(std::string(__FILE__) + \
+"    Exception thrown at line " + std::to_string(__LINE__) + \
+": " + std::string(MSG)))
+#endif
 
 namespace
 {
