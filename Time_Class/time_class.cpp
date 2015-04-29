@@ -3,11 +3,11 @@
 #include <iostream>
 #include <cstring>
 #include <string>
+#include <utility>
 #include <vector>
 
 #include "time_class.hpp"
-#include "global_defines.hpp"
-#include "common.hpp"
+#include "globals.hpp"
 
 namespace
 {
@@ -138,6 +138,16 @@ namespace tdata
 /** Time_class member functions: */
 namespace tdata
 {
+    time_class::time_class(const time_class& t) noexcept : 
+            cur_time(t.cur_time)
+    {
+    }
+    
+    time_class::time_class(time_class&& t) noexcept : 
+            cur_time(std::move(t.cur_time))
+    {
+    }
+    
     time_class::time_class(const struct tm& t) : cur_time(t)
     {
     }
@@ -161,6 +171,12 @@ namespace tdata
         {
             std::memcpy(&(this->cur_time), &t, sizeof(t));
         }
+        return *this;
+    }
+    
+    time_class& time_class::operator=(time_class&& t) noexcept
+    {
+        this->cur_time = std::move(t.cur_time);
         return *this;
     }
     

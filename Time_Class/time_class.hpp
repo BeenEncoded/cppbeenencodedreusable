@@ -5,7 +5,7 @@
 #include <chrono>
 #include <unistd.h>
 
-#include "global_defines.hpp"
+#include "globals.hpp"
 
 namespace tdata
 {
@@ -18,7 +18,7 @@ namespace tdata
         typedef const_int_type<(day::value * 7)>     week;
     }
     
-    class time_class;
+    typedef class time_class time_class;
     
     typedef std::chrono::system_clock clock_type;
     typedef std::chrono::time_point<clock_type> time_point;
@@ -33,9 +33,11 @@ namespace tdata
     
     /** Time: The indefinite continued progress of existence and events in the past, 
      * present, and future regarded as a whole. */
-    class time_class
+    typedef class time_class
     {
     public:
+        time_class(const time_class&) noexcept;
+        time_class(time_class&&) noexcept;
         explicit time_class(const struct tm&);
         explicit time_class();
         ~time_class();
@@ -43,6 +45,7 @@ namespace tdata
         const struct tm& value() const;
         
         time_class& operator=(const time_class&);
+        time_class& operator=(time_class&&) noexcept;
         time_class& operator=(const struct tm&);
         
         //comparisons
@@ -96,7 +99,7 @@ namespace tdata
         void subtract_day();
         void add_day();
         
-    };
+    } time_class;
     
 }
 
