@@ -6,6 +6,7 @@
 #include <fstream>
 
 #include "stream_operations.hpp"
+#include "data/budget_data.hpp"
 
 namespace
 {
@@ -85,6 +86,7 @@ namespace utility
         return success;
     }
     
+    
     template<typename type>
     std::istream& in_mem(std::istream& in, type& t)
     {
@@ -99,7 +101,10 @@ namespace utility
             {
                 mem[x] = in.get();
             }
-            if(((x + 1) < sizeof(type)) && !in.fail()) in.setstate(std::ios_base::failbit);
+            if(((x + 1) < sizeof(type)) && !in.fail())
+            {
+                in.setstate(std::ios_base::failbit);
+            }
             memcpy(&t, mem, sizeof(type));
         }
         delete[] mem;
@@ -170,7 +175,6 @@ namespace utility
                 if(in.fail() && !in.eof()) v.pop_back();
                 in.peek();
             }
-            in.peek();
         }
         return in;
     }
