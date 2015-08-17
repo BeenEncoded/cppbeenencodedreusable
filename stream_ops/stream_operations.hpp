@@ -14,7 +14,8 @@ namespace utility
     template<typename type> std::ostream& out_mem(std::ostream&, const type&);
     template<typename type> std::ostream& write_vector(std::ostream&, const std::vector<type>&);
     template<typename type> std::istream& read_vector(std::istream&, std::vector<type>&);
-    
+    std::ostream& write_string(std::ostream&, const std::string&);
+    std::istream& read_string(std::istream&, std::string&);
 }
 
 #endif

@@ -6,7 +6,6 @@
 #include <fstream>
 
 #include "stream_operations.hpp"
-#include "data/budget_data.hpp"
 
 namespace
 {
@@ -85,7 +84,6 @@ namespace utility
         }
         return success;
     }
-    
     
     template<typename type>
     std::istream& in_mem(std::istream& in, type& t)
@@ -174,6 +172,34 @@ namespace utility
                 in>> v.back();
                 if(in.fail() && !in.eof()) v.pop_back();
                 in.peek();
+            }
+            in.peek();
+        }
+        return in;
+    }
+    
+    std::ostream& write_string(std::ostream& out, const std::string& s)
+    {
+        if(out.good())
+        {
+            out_mem<std::size_t>(out, s.size());
+            out<< s;
+        }
+        return out;
+    }
+    
+    std::istream& read_string(std::istream& in, std::string& s)
+    {
+        s.erase();
+        in.peek();
+        if(in.good())
+        {
+            std::size_t size{0};
+            in_mem<std::size_t>(in, size);
+            for(std::size_t x{0}; ((x < size) && in.good()); ++x)
+            {
+                s += in.get();
+                if(in.fail()) s.erase((s.begin() + (s.size() - 1)));
             }
         }
         return in;
