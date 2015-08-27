@@ -4,7 +4,6 @@
 #include <string>
 
 #include "custom_list_control.hpp"
-#include "data/flash_card.hpp"
 
 namespace
 {
@@ -80,7 +79,4 @@ bool CustomListControl<type>::remove_selected()
     }
     return false;
 }
-
-template class CustomListControl<data::deck_data>;
-template class CustomListControl<data::flash_card_data>;
 

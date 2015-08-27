@@ -6,8 +6,6 @@
 #include <string>
 #include <vector>
 
-#include "data/flash_card.hpp"
-
 
 template<typename type>
 class CustomListControl : public wxListCtrl
