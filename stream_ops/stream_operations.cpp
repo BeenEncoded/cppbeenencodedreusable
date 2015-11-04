@@ -4,6 +4,7 @@
 #include <vector>
 #include <cstring>
 #include <fstream>
+#include <cstdint>
 
 #include "stream_operations.hpp"
 
@@ -140,7 +141,10 @@ namespace utility
     {
         if(out.good())
         {
-            out_mem<std::size_t>(out, v.size());
+            {
+                std::uint32_t sz((std::uint32_t)v.size());
+                out_mem<std::uint32_t>(out, sz);
+            }
             for(unsigned int x(0); ((x < v.size()) && out.good()); ++x)
             {
                 out<< v[x];
@@ -163,10 +167,10 @@ namespace utility
         in.peek();
         if(in.good())
         {
-            std::size_t size(0);
+            std::uint32_t size(0);
             
-            in_mem<std::size_t>(in, size);
-            for(std::size_t x(0); ((x < size) && in.good() && (in.peek() != EOF)); ++x)
+            in_mem<std::uint32_t>(in, size);
+            for(std::uint32_t x(0); ((x < size) && in.good() && (in.peek() != EOF)); ++x)
             {
                 v.push_back(type());
                 in>> v.back();
@@ -182,7 +186,10 @@ namespace utility
     {
         if(out.good())
         {
-            out_mem<std::size_t>(out, s.size());
+            {
+                std::uint32_t sz((std::uint32_t)s.size());
+                out_mem<std::uint32_t>(out, sz);
+            }
             out<< s;
         }
         return out;
@@ -194,9 +201,9 @@ namespace utility
         in.peek();
         if(in.good())
         {
-            std::size_t size{0};
-            in_mem<std::size_t>(in, size);
-            for(std::size_t x{0}; ((x < size) && in.good()); ++x)
+            std::uint32_t size{0};
+            in_mem<std::uint32_t>(in, size);
+            for(std::uint32_t x{0}; ((x < size) && in.good()); ++x)
             {
                 s += in.get();
                 if(in.fail()) s.erase((s.begin() + (s.size() - 1)));
