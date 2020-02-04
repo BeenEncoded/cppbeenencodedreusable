@@ -85,6 +85,50 @@ namespace
     
 }
 
+namespace tdata
+{
+    namespace util
+    {
+        /**
+         * @return a structure that uses fixed-width data types
+         * that will be the same size across operating systems;
+         */
+        struct fixed_size_tm to_fixed_tm(const struct tm& t)
+        {
+            return fixed_size_tm{
+                t.tm_sec,
+                t.tm_min,
+                t.tm_hour,
+                t.tm_mday,
+                t.tm_mon,
+                t.tm_year,
+                t.tm_wday,
+                t.tm_yday,
+                t.tm_isdst};
+        }
+        
+        struct tm from_fixed_tm(const struct fixed_size_tm& t)
+        {
+            struct tm tempt{current_time()};
+            return tm{
+                t.sec,
+                t.min,
+                t.hour,
+                t.mday,
+                t.mon,
+                t.year,
+                t.wday,
+                t.yday,
+                t.isdst
+            };
+        }
+        
+        
+    }
+    
+    
+}
+
 /** Stream operators: */
 namespace tdata
 {
@@ -103,15 +147,20 @@ namespace tdata
     
     std::istream& operator>>(std::istream& in, time_class& t)
     {
-        char *ch(new char[sizeof(struct tm)]);
+        using tdata::util::fixed_size_tm;
+        using tdata::util::from_fixed_tm;
+        
+        char *ch(new char[sizeof(struct fixed_size_tm)]);
         
         in.peek();
         if(in.good())
         {
-            for(unsigned int x = 0; ((x < sizeof(struct tm)) && in.good()); x++) ch[x] = in.get();
+            for(unsigned int x = 0; ((x < sizeof(struct fixed_size_tm)) && in.good()); x++) ch[x] = in.get();
             if(in.good())
             {
-                std::memcpy(&(t.cur_time), ch, sizeof(struct tm));
+                fixed_size_tm ftm;
+                std::memcpy(&ftm, ch, sizeof(struct fixed_size_tm));
+                t.cur_time = from_fixed_tm(ftm);
             }
             in.peek();
         }
@@ -121,11 +170,15 @@ namespace tdata
     
     std::ostream& operator<<(std::ostream& out, const time_class& t)
     {
-        char *ch(new char[sizeof(struct tm)]);
+        using tdata::util::fixed_size_tm;
+        using tdata::util::to_fixed_tm;
+        
+        char *ch(new char[sizeof(struct fixed_size_tm)]);
         if(out.good())
         {
-            std::memcpy(ch, &(t.cur_time), sizeof(struct tm));
-            for(unsigned int x = 0; x < sizeof(struct tm); x++) out<< ch[x];
+            fixed_size_tm ftm{to_fixed_tm(t.cur_time)};
+            std::memcpy(ch, &ftm, sizeof(struct fixed_size_tm));
+            for(unsigned int x = 0; x < sizeof(struct fixed_size_tm); x++) out<< ch[x];
         }
         delete[] ch;
         return out;
@@ -198,7 +251,6 @@ namespace tdata
                     (this->cur_time.tm_yday == t.cur_time.tm_yday) && 
                     (this->cur_time.tm_mon == t.cur_time.tm_mon) && 
                     (this->cur_time.tm_year == t.cur_time.tm_year) && 
-                    (std::strcmp(this->cur_time.tm_zone, t.cur_time.tm_zone) == 0) && 
                     (this->cur_time.tm_isdst == t.cur_time.tm_isdst));
     }
     
@@ -212,7 +264,6 @@ namespace tdata
                     (this->cur_time.tm_yday != t.cur_time.tm_yday) || 
                     (this->cur_time.tm_mon != t.cur_time.tm_mon) || 
                     (this->cur_time.tm_year != t.cur_time.tm_year) || 
-                    (std::strcmp(this->cur_time.tm_zone, t.cur_time.tm_zone) != 0) || 
                     (this->cur_time.tm_isdst != t.cur_time.tm_isdst));
     }
     

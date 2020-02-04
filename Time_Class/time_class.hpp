@@ -3,7 +3,11 @@
 #include <ctime>
 #include <iostream>
 #include <chrono>
-#include <unistd.h>
+
+/* Nonzero if YEAR is a leap year (every 4 years,
+   except every 100th isn't, and every 400th is).  */
+# define __isleap(year)	\
+  ((year) % 4 == 0 && ((year) % 100 != 0 || (year) % 400 == 0))
 
 namespace tdata
 {
@@ -14,6 +18,20 @@ namespace tdata
         constexpr long hour{minute * 60};
         constexpr long day{hour * 24};
         constexpr long week{day * 7};
+    }
+    
+    namespace util
+    {
+        struct fixed_size_tm;
+        
+        
+        struct fixed_size_tm to_fixed_tm(const struct tm&);
+        struct tm from_fixed_tm(const struct fixed_size_tm&);
+        
+        struct fixed_size_tm
+        {
+            int32_t sec, min, hour, mday, mon, year, wday, yday, isdst;
+        };
     }
     
     typedef class time_class time_class;

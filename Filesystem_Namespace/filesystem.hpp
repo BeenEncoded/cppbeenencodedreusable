@@ -1,211 +1,175 @@
-#ifndef FILESYSTEM_HPP_INCLUDED
-#define FILESYSTEM_HPP_INCLUDED
-#include <string>
+#ifndef UTILITY_FILESYSTEM_HPP_INCLUDED
+#define UTILITY_FILESYSTEM_HPP_INCLUDED
 #include <boost/filesystem.hpp>
+#include <boost/regex.hpp>
+#include <string>
 
 /** 
- * The goal of filesystem namespace is to make commonly performed
- * tasks with the boost filesystem library much easier to implement.
- * This wrapper abstracts the boost filesystem library, and 
- * forwards exceptions through runtime errors that povide the 
- * line number and file that the exception was thrown in.  The 
- * purpose of this wrapper is to eliminate a lot of the time-consuming
- * lower-level aspects of the boost library so that the 
- * programmer can worry less about error handling, and more
- * about the algorithms.  If you find anything that can
- * be improved, you may submit a pull-request to the github unit_testing branch
- * for review and testing.
-  */
-
-/** 
- * All path-based arguments take FULL paths.
+ * @author Jonathan Whitlock
+ * @date 02/18/2016
+ * @brief Some iterator wrappers that make the boost::filesystem iterators
+ * much more simple to use.  They all satisfy the requirements of ForwardIterator.
  */
-
-namespace fsys
+namespace filesystem
 {
-    typedef struct result_data_boolean result_data_boolean;
-    typedef class tree_iterator_class tree_iterator_class;
-    typedef class tree_riterator_class tree_riterator_class;
-    typedef class copy_iterator_class copy_iterator_class;
-    typedef class delete_iterator_class delete_iterator_class;
+    class recursive_iterator;
+    class regular_iterator;
+    class copy_iterator;
+    class glob;
+    class recursive_glob;
     
     
-    result_data_boolean fdelete(const std::string&);
-    result_data_boolean fcopy(const std::string&, const std::string&);
-    result_data_boolean create_folder(const std::string&);
-    result_data_boolean frename(const std::string&, const std::string&);
-    result_data_boolean fmove(const std::string&, const std::string&);
-    bool can_delete(const std::string&);
-    char pref_slash();
-    
-    std::string current_path();
-    result_data_boolean is_file(const std::string&);
-    result_data_boolean is_folder(const std::string&);
-    result_data_boolean is_symlink(const std::string&);
-    result_data_boolean copy_folders(const std::string&, const std::string&, const std::string&);
-    
-    namespace permission
-    {
-        namespace owner
-        {
-            bool can_read(const std::string&);
-            bool can_write(const std::string&);
-            bool can_execute(const std::string&);
-            bool all_perms(const std::string&);
-        }
-    }
-    
-    /* Returns a string that represents a group of characters that should
-     never appear in a filename on Windows. */
-    inline std::string windows_bad_filename_chars()
-    {
-        return std::string("<>:\"\\/|?*");
-    }
-    
-    /* Returns a string that represents a group of characters that should
-     never appear in a filename on Linux. */
-    inline std::string linux_bad_filename_chars()
-    {
-        return std::string("\0\n/");
-    }
-    
-    
-    typedef struct result_data_boolean
-    {
-        explicit result_data_boolean()
-        {
-            this->value = true;
-        }
-        
-        result_data_boolean& operator=(const result_data_boolean& res)
-        {
-            if(this != &res)
-            {
-                this->value = res.value;
-                this->error = res.error;
-                this->path = res.path;
-            }
-            return *this;
-        }
-        
-        bool operator==(const result_data_boolean& res) const
-        {
-            return (
-                    (this->value == res.value) && 
-                    (this->error == res.error) && 
-                    (this->path == res.path));
-        }
-        
-        bool operator!=(const result_data_boolean& res) const
-        {
-            return !(this->operator==(res));
-        }
-        
-        bool operator!() const
-        {
-            return !(this->value);
-        }
-        
-        bool value;
-        std::string error, path;
-    } result_data_boolean;
-    
-    /* Iterators start with the first element inside the folder.*/
-    typedef class tree_iterator_class
+    /**
+     * @class regular_iterator
+     * @author Jonathan Whitlock
+     * @date 02/16/2016
+     * @file filesystem.hpp
+     * @brief A non-recursive filesystem iterator wrapper for the 
+     * boost directory_iterator.
+     */
+    class regular_iterator
     {
     public:
-        explicit tree_iterator_class(const std::string&);
-        explicit tree_iterator_class() : p(), it(), end(), is_good_path(false) {}
+        explicit regular_iterator();
+        regular_iterator(const boost::filesystem::path&);
+        regular_iterator(const regular_iterator&);
         
-        ~tree_iterator_class();
+        virtual ~regular_iterator();
         
-        tree_iterator_class& operator=(const tree_iterator_class&);
-        tree_iterator_class operator++();
+        virtual regular_iterator& operator=(const regular_iterator&);
+        virtual regular_iterator& operator++();
+        regular_iterator operator++(int);
         
-        unsigned int count_from_end() const;
-        unsigned int count_from_beg() const;
-        std::string value() const;
-        bool at_end() const;
+        bool operator!=(const regular_iterator&) const;
+        bool operator==(const regular_iterator&) const;
         
+        boost::filesystem::directory_entry& operator*();
+        boost::filesystem::directory_entry* operator->();
+        void swap(regular_iterator&);
         
-    private:
-        boost::filesystem::path p;
-        boost::filesystem::directory_iterator it, end;
-        bool is_good_path;
-    } tree_iterator_class;
-    
-    /* Iterators start with the first element inside the folder.*/
-    typedef class tree_riterator_class
-    {
-    public:
-        explicit tree_riterator_class(const std::string&);
-        explicit tree_riterator_class() : p(), it(), end(), is_good_path(false) {}
-        
-        virtual ~tree_riterator_class();
-        
-        virtual tree_riterator_class& operator=(const tree_riterator_class&);
-        virtual tree_riterator_class operator++();
-        
-        unsigned int count_from_end();
-        unsigned int count_from_beg();
-        std::string value() const;
-        bool at_end() const;
-        
+        bool end() const;
         
     protected:
-        boost::filesystem::path p;
-        boost::filesystem::recursive_directory_iterator it, end;
-        bool is_good_path;
-    } tree_riterator_class;
+        boost::filesystem::path beg_path;
+        boost::filesystem::directory_iterator it;
+    };
     
-    
-    
-    typedef class copy_iterator_class : public tree_riterator_class
+    /**
+     * @class recursive_iterator
+     * @author Jonathan Whitlock
+     * @date 02/16/2016
+     * @file filesystem.hpp
+     * @brief A recursive filesystem iterator wrapper for the
+     * boost recursive_directory_iterator.
+     */
+    class recursive_iterator
     {
     public:
-        explicit copy_iterator_class() : tree_riterator_class(), success(), dest() {}
-        explicit copy_iterator_class(const std::string&, const std::string&);
+        explicit recursive_iterator();
+        recursive_iterator(const boost::filesystem::path&);
+        recursive_iterator(const recursive_iterator&);
         
-        ~copy_iterator_class();
+        virtual ~recursive_iterator();
         
-        tree_riterator_class& operator=(const copy_iterator_class&);
-        tree_riterator_class operator++();
-        void skip();
+        virtual recursive_iterator& operator=(const recursive_iterator&);
+        virtual recursive_iterator& operator++();
+        recursive_iterator operator++(int);
         
-        result_data_boolean success;
+        bool operator!=(const recursive_iterator&) const;
+        bool operator==(const recursive_iterator&) const;
         
-    private:
-        std::string dest;
-        using tree_riterator_class::p;
-        using tree_riterator_class::it;
-        using tree_riterator_class::end;
-        using tree_riterator_class::is_good_path;
-    } copy_iterator_class;
+        boost::filesystem::directory_entry& operator*();
+        boost::filesystem::directory_entry* operator->();
+        void swap(recursive_iterator&);
+        
+        bool end() const;
+        
+    protected:
+        boost::filesystem::recursive_directory_iterator it;
+        boost::filesystem::path beg_path;
+        
+    };
     
-    
-    typedef class delete_iterator_class : public tree_riterator_class
+    /**
+     * @class copy_iterator
+     * @author Jonathan Whitlock
+     * @date 02/16/2016
+     * @file filesystem.hpp
+     * @brief Recursively copies a folder into another folder.
+     */
+    class copy_iterator : public recursive_iterator
     {
     public:
-        explicit delete_iterator_class() : tree_riterator_class(), success() {}
-        explicit delete_iterator_class(const std::string&);
+        explicit copy_iterator();
+        copy_iterator(const boost::filesystem::path&, const boost::filesystem::path&);
+        copy_iterator(const copy_iterator&);
+        virtual ~copy_iterator();
         
-        ~delete_iterator_class();
+        virtual copy_iterator& operator=(const copy_iterator&);
+        virtual copy_iterator& operator++();
+        copy_iterator operator++(int);
         
-        tree_riterator_class& operator=(const delete_iterator_class&);
-        tree_riterator_class operator++();
-        void skip();
-        
-        
-        result_data_boolean success;
     private:
-        using tree_riterator_class::p;
-        using tree_riterator_class::it;
-        using tree_riterator_class::end;
-        using tree_riterator_class::is_good_path;
+        boost::filesystem::path source, dest;
+    };
+    
+    /**
+     * @class glob
+     * @author Jonathan Whitlock
+     * @date 03/30/2016
+     * @file filesystem.hpp
+     * @brief A non-recursive glob iterator.  Iterates only
+     * over entries that match a regular expression.  By default, uses the search
+     * algorithm instead of the exact match algorithm.
+     */
+    class glob : public regular_iterator
+    {
+    public:
+        explicit glob();
+        glob(const glob&);
+        glob(const boost::filesystem::path&, const std::string& = "", const bool& = false);
+        virtual ~glob();
         
-        void delete_path(const std::string&);
+        virtual glob& operator=(const glob&);
+        virtual glob& operator++();
+        glob operator++(int);
         
-    } delete_iterator_class;
+    private:
+        bool matches() const;
+    
+        boost::regex expression;
+        bool exact_match;
+        
+    };
+    
+    /**
+     * @class glob
+     * @author Jonathan Whitlock
+     * @date 03/30/2016
+     * @file filesystem.hpp
+     * @brief A recursive glob iterator.  Iterates only
+     * over entries that match a regular expression.  By default, uses the search
+     * algorithm instead of the exact match algorithm.
+     */
+    class recursive_glob : public recursive_iterator
+    {
+    public:
+        explicit recursive_glob();
+        recursive_glob(const recursive_glob&);
+        recursive_glob(const boost::filesystem::path&, const std::string& = "", const bool& = false);
+        virtual ~recursive_glob();
+        
+        virtual recursive_glob& operator=(const recursive_glob&);
+        virtual recursive_glob& operator++();
+        recursive_glob operator++(int);
+        
+    private:
+        bool matches() const;
+    
+        boost::regex expression;
+        bool exact_match;
+        
+    };
     
     
 }
